@@ -44,14 +44,16 @@ def get_connection():
 
 
 def insert_raw_text(text):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("""
-        INSERT INTO busbank_text (text)
-        VALUES (%s);
-        """,
-        (text,)
-    )
+    print(f"Inserting {len(text)} characters into DB")
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO busbank_text (text)
+                VALUES (%s);
+                """,
+                (text,)
+            )
+            print(f"Inserted {cursor.rowcount} rows.")
 
 
 def database_lol():
