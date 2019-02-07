@@ -1,5 +1,9 @@
+import logging
 import os
 import psycopg2
+
+
+logger = logging.getLogger("BusBank")
 
 db_host = os.getenv("BB_DB_HOST", "localhost")
 db_name = os.getenv("BB_DB_NAME")
@@ -9,7 +13,9 @@ password = os.getenv("BB_DB_PASS")
 CONNECTION = None
 
 def _connect():
-    print("Connecting to database")
+    logger.debug("Connecting to database", extra={
+        "db_name": db_name,
+    })
     return psycopg2.connect(
         dbname=db_name,
         user=username,
@@ -17,20 +23,28 @@ def _connect():
 
 
 def connection_alive(connection):
-    print("Checking if database connection is alive")
+    logger.debug("Checking if database connection is alive", extra={
+        "db_name": db_name,
+    })
     try:
         c = connection.cursor()
         c.execute("SELECT 1")
-        print("Database connection is alive")
+        logger.debug("Database connection is alive", extra={
+        "db_name": db_name,
+    })
         return True
     except psycopg2.OperationalError:
-        print("Database connection is not alive")
+        logger.debug("Database connection is not alive", extra={
+        "db_name": db_name,
+    })
         return False
 
 
 def get_connection():
     global CONNECTION
-    print("Getting database connection")
+    logger.debug("Getting database connection", extra={
+        "db_name": db_name,
+    })
     if not CONNECTION:
         CONNECTION = _connect()
         return CONNECTION
@@ -44,7 +58,9 @@ def get_connection():
 
 
 def insert_raw_text(text):
-    print(f"Inserting {len(text)} characters into DB")
+    logger.debug(f"Inserting {len(text)} characters into DB", extra={
+        "char_count": len(text),
+    })
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -53,11 +69,8 @@ def insert_raw_text(text):
                 """,
                 (text,)
             )
-            print(f"Inserted {cursor.rowcount} rows.")
-
-
-def database_lol():
-    print("databasing")
-    conn = get_connection()
-    c = conn.cursor()
-    print("1", c.execute("SELECT 1"))
+            logger.info(f"Inserted {cursor.rowcount} rows.", extra={
+                "db_name": db_name,
+                "affected_rows": cursor.rowcount,
+                "inserted_rows": cursor.rowcount,
+            })
